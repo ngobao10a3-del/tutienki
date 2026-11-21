@@ -1,0 +1,1580 @@
+# MASTER GAME DESIGN & TECHNICAL ARCHITECTURE
+## DỰ ÁN: HỆ THỐNG TU TIÊN KÝ
+### Thế giới: THƯƠNG HUYỀN GIỚI
+
+---
+
+# I. MỤC TIÊU DỰ ÁN
+
+Xây dựng một trò chơi nhập vai tu tiên dạng văn bản (Text-based RPG), kết hợp:
+
+- Interactive Storytelling.
+- Character Development.
+- Cultivation Progression.
+- Choice-based Adventure.
+- Turn-based Combat.
+- World Exploration.
+- NPC & Relationship Simulation.
+- Faction & Reputation.
+- Quest System.
+- Causal Consequence System.
+- Multiple Endings.
+
+Trò chơi có thể tham khảo những nguyên tắc gameplay phổ biến của các game lựa chọn và phiêu lưu như Life in Adventure, nhưng phải xây dựng thế giới, nhân vật, nội dung, hình ảnh, văn bản, dữ liệu và mã nguồn riêng.
+
+Không sao chép mã nguồn, nội dung truyện, nhân vật hoặc tài sản độc quyền của trò chơi khác.
+
+## Nguyên tắc phát triển
+
+1. Gameplay phải thực sự hoạt động, không chỉ mô phỏng bằng văn bản.
+2. Mọi lựa chọn quan trọng phải tạo ra hậu quả có thể lưu trữ và kiểm chứng.
+3. Các hệ thống phải được tích hợp với nhau.
+4. AI chịu trách nhiệm diễn đạt và sáng tạo nội dung trong giới hạn dữ liệu được cung cấp.
+5. Game Engine chịu trách nhiệm tính toán, kiểm tra điều kiện và quyết định thay đổi trạng thái.
+6. Không để AI tự ý thay đổi chỉ số, vật phẩm, cảnh giới, quan hệ hoặc kết quả chiến đấu.
+7. Không viết lại những module đang hoạt động tốt nếu chưa có lý do kỹ thuật.
+8. Ưu tiên mở rộng kiến trúc hiện có thay vì xây dựng lại toàn bộ dự án.
+
+---
+
+# II. THIẾT KẾ GAMEPLAY TỔNG THỂ
+
+## 2.1. Gameplay Loop
+
+Vòng lặp gameplay chính:
+
+Explore → Encounter → Decision → Resolution → Consequence → Progression → Next Encounter.
+
+Diễn giải:
+
+1. Người chơi khám phá địa điểm.
+2. Event Engine xác định sự kiện phù hợp.
+3. Người chơi nhận được tình huống và các lựa chọn.
+4. Game Engine kiểm tra điều kiện.
+5. Hệ thống xử lý kết quả bằng quy tắc xác định.
+6. Causal System lưu lại hậu quả.
+7. Character, Cultivation, Inventory, Quest, NPC và World State được cập nhật.
+8. AI diễn đạt kết quả thành nội dung truyện.
+9. Người chơi tiếp tục hành trình.
+
+Không được để phần truyện chỉ hoạt động ở giai đoạn đầu, trong khi những thao tác tiếp theo vẫn chạy theo gameplay cũ.
+
+Mọi thao tác quan trọng phải đi qua cùng một luồng xử lý gameplay.
+
+## 2.2. Các màn hình chính
+
+- Adventure: màn hình gameplay chính.
+- Character: thông tin nhân vật và thuộc tính.
+- Cultivation: tu luyện, công pháp và đột phá.
+- Inventory: túi đồ và trang bị.
+- World: bản đồ và địa điểm.
+- Quest: nhiệm vụ.
+- Relationships: NPC và quan hệ.
+- Factions: tông môn, thế lực và danh vọng.
+- Combat: chiến đấu.
+- Story History: lịch sử lựa chọn và nhân quả.
+
+UI chỉ hiển thị dữ liệu và gửi hành động. Không đặt logic gameplay quan trọng trực tiếp trong component giao diện.
+
+---
+
+# III. CHARACTER SYSTEM
+
+## 3.1. Thuộc tính nhân vật
+
+Các thuộc tính cốt lõi:
+
+- Căn Cốt.
+- Linh Lực.
+- Thân Pháp.
+- Ngộ Tính.
+- Thần Thức.
+- Tâm Cảnh.
+- Đạo Tâm.
+
+Mỗi thuộc tính phải có vai trò riêng và ảnh hưởng đến những hệ thống cụ thể.
+
+Ví dụ:
+
+| Thuộc tính | Ảnh hưởng |
+|---|---|
+| Căn Cốt | Tốc độ tu luyện, nền tảng đột phá |
+| Linh Lực | Năng lực sử dụng pháp thuật |
+| Thân Pháp | Né tránh, di chuyển, hành động |
+| Ngộ Tính | Học công pháp, lĩnh ngộ |
+| Thần Thức | Phát hiện, nhận biết, kiểm tra tinh thần |
+| Tâm Cảnh | Khả năng chống ảnh hưởng tinh thần |
+| Đạo Tâm | Một số lựa chọn và sự kiện nhân quả |
+
+Các công thức ảnh hưởng cần được cân bằng và kiểm thử, không đặt giá trị tùy ý rồi coi là hoàn thiện.
+
+## 3.2. Character State
+
+Lưu trữ:
+
+- Character ID.
+- Tên.
+- Tuổi.
+- Giới tính nhân vật trong game.
+- Xuất thân.
+- Thiên phú.
+- Thuộc tính.
+- Tình trạng hiện tại.
+- Cảnh giới.
+- Tuổi thọ.
+- Danh tiếng.
+- Các cờ trạng thái quan trọng.
+
+---
+
+# IV. CULTIVATION SYSTEM
+
+## 4.1. Hệ thống cảnh giới
+
+Lộ trình cảnh giới dự kiến:
+
+1. Phàm Nhân.
+2. Luyện Khí.
+3. Trúc Cơ.
+4. Kim Đan.
+5. Nguyên Anh.
+6. Hóa Thần.
+7. Luyện Hư.
+8. Hợp Thể.
+9. Đại Thừa.
+10. Độ Kiếp.
+
+Mỗi cảnh giới có thể chia thành các tiểu cảnh giới.
+
+Không được cho phép nhân vật tự động tăng cảnh giới chỉ vì một đoạn văn bản nói rằng nhân vật đã đột phá.
+
+## 4.2. Cultivation State
+
+Lưu trữ:
+
+- Current Realm.
+- Current Stage.
+- Cultivation EXP.
+- Cultivation Progress.
+- Cultivation Speed.
+- Foundation.
+- Comprehension.
+- Bottleneck.
+- Cultivation Method.
+- Breakthrough History.
+
+## 4.3. Tu luyện
+
+Các hoạt động:
+
+- Tĩnh tọa.
+- Vận chuyển công pháp.
+- Luyện hóa linh khí.
+- Lĩnh ngộ công pháp.
+- Tu luyện thể chất.
+- Sử dụng tài nguyên hỗ trợ.
+
+Mỗi hành động phải có:
+
+- Điều kiện thực hiện.
+- Chi phí thời gian.
+- Chi phí tài nguyên nếu có.
+- Kết quả tính toán.
+- Ảnh hưởng đến trạng thái nhân vật.
+
+## 4.4. Đột phá
+
+Luồng xử lý:
+
+Check Requirements → Check Foundation → Prepare Resources → Breakthrough Event → Calculate Outcome → Update State → Record Consequence.
+
+Kết quả dự kiến:
+
+- Đột phá hoàn mỹ.
+- Đột phá thành công.
+- Đột phá không ổn định.
+- Đột phá thất bại.
+
+Kết quả phải được tính bởi Cultivation Engine.
+
+## 4.5. Thiên kiếp
+
+Thiên kiếp phụ thuộc vào:
+
+- Cảnh giới.
+- Nền tảng tu luyện.
+- Công pháp.
+- Pháp bảo.
+- Các lựa chọn trong quá khứ.
+- Trạng thái nhân quả.
+
+Thiên kiếp phải có cơ chế và điều kiện rõ ràng, không chỉ là một đoạn truyện ngẫu nhiên.
+
+## 4.6. Các con đường tu luyện
+
+- Kiếm Tu.
+- Thể Tu.
+- Pháp Tu.
+- Đan Tu.
+- Trận Tu.
+
+Cho phép xây dựng nhân vật đa hướng nhưng phải có đánh đổi về tài nguyên, thời gian và hiệu quả chuyên môn.
+
+---
+
+# V. DICE & CHECK SYSTEM
+
+## 5.1. D20 Resolver
+
+Dùng D20 cho những tình huống kiểm tra kỹ năng và điều kiện trong sự kiện.
+
+Ví dụ:
+
+- Thuyết phục NPC.
+- Nhận biết nguy hiểm.
+- Phát hiện cạm bẫy.
+- Lĩnh ngộ công pháp.
+- Kiểm tra khả năng vượt qua thử thách.
+
+Cấu trúc:
+
+Roll = Random(1, 20).
+
+Final Check = Roll + Relevant Attribute + Modifier.
+
+So sánh với Difficulty Class.
+
+Kết quả có thể chia thành:
+
+- Critical Failure.
+- Failure.
+- Success.
+- Critical Success.
+
+Cần xác định rõ cách xử lý biên và điều kiện đặc biệt.
+
+## 5.2. Phân loại lựa chọn
+
+- Deterministic Choice: không cần tung xúc xắc.
+- Skill Check Choice: yêu cầu kiểm tra năng lực.
+- Consequence Choice: hậu quả được xác định từ trạng thái và lịch sử.
+
+Không được sử dụng D20 cho tất cả hệ thống một cách máy móc.
+
+Chiến đấu cần Combat Engine riêng.
+
+---
+
+# VI. COMBAT SYSTEM
+
+## 6.1. Thuộc tính chiến đấu
+
+- Attack.
+- Attack Speed.
+- Critical Chance.
+- Critical Damage.
+- Defense.
+- Evasion.
+- Health.
+- Spirit Energy.
+
+## 6.2. Quy trình chiến đấu
+
+Encounter → Preparation → Initiative → Combat Resolution → Result → Consequence.
+
+## 6.3. Nguyên tắc tính toán
+
+Các công thức đề xuất ban đầu:
+
+ATK = BaseATK + RealmBonus + EquipmentBonus.
+
+DEF = BaseDEF + RealmBonus + EquipmentBonus.
+
+Damage = max(1, ATK - DEF).
+
+Critical Damage = Damage × CriticalMultiplier.
+
+Đây chỉ là công thức khởi điểm để thiết kế và cân bằng, không phải công thức đã được xác nhận hoàn thiện.
+
+## 6.4. Combat Engine
+
+Phải chịu trách nhiệm:
+
+- Xác định bên tham chiến.
+- Kiểm tra điều kiện bắt đầu.
+- Xác định thứ tự hành động.
+- Tính toán sát thương.
+- Xử lý kỹ năng.
+- Xử lý hiệu ứng.
+- Kiểm tra chiến thắng hoặc thất bại.
+- Cập nhật trạng thái nhân vật.
+- Ghi nhận hậu quả vào Causal History.
+
+AI không được tự quyết định kết quả chiến đấu.
+
+---
+
+# VII. INVENTORY & ITEM SYSTEM
+
+## 7.1. Nhóm vật phẩm
+
+- Đan dược.
+- Vũ khí.
+- Pháp bảo.
+- Công pháp.
+- Linh thảo.
+- Nguyên liệu.
+- Linh thạch.
+- Bùa chú.
+- Trận pháp.
+- Vật phẩm nhiệm vụ.
+- Di vật và truyền thừa.
+
+## 7.2. Phẩm cấp
+
+Dự kiến:
+
+Phàm → Hạ → Trung → Thượng → Cực → Tiên.
+
+## 7.3. Equipment Slots
+
+- Weapon.
+- Armor.
+- Shoes.
+- Artifact.
+- Ring.
+- Talisman.
+
+## 7.4. Inventory Engine
+
+Chức năng:
+
+- Nhận vật phẩm.
+- Sử dụng.
+- Trang bị.
+- Tháo trang bị.
+- Xếp chồng.
+- Kiểm tra điều kiện sử dụng.
+- Kiểm tra số lượng.
+- Tiêu hao.
+- Khóa vật phẩm nhiệm vụ.
+
+Vật phẩm có thể mở khóa lựa chọn, nhiệm vụ hoặc sự kiện.
+
+Không để AI tự tạo vật phẩm hoặc tự thêm vật phẩm vào túi đồ mà không qua Item Engine.
+
+---
+
+# VIII. WORLD EXPLORATION
+
+## 8.1. Cấu trúc thế giới
+
+Thế giới được chia thành:
+
+- Đại lục.
+- Khu vực.
+- Thành trì.
+- Tông môn.
+- Bí cảnh.
+- Di tích.
+- Chợ giao dịch.
+- Khu vực nguy hiểm.
+- Địa điểm đặc biệt.
+
+## 8.2. World State
+
+Lưu trữ:
+
+- Current Region.
+- Current Location.
+- Current Day.
+- World Events.
+- Faction State.
+- Location State.
+- Quest State.
+- Historical Flags.
+
+## 8.3. Exploration Engine
+
+Chịu trách nhiệm:
+
+- Di chuyển.
+- Kiểm tra địa điểm.
+- Tiêu hao thời gian.
+- Kiểm tra điều kiện vào khu vực.
+- Phát hiện sự kiện địa điểm.
+- Mở khóa địa điểm.
+- Cập nhật trạng thái thế giới.
+
+---
+
+# IX. QUEST SYSTEM
+
+Các loại nhiệm vụ:
+
+- Main Quest.
+- Side Quest.
+- Exploration Quest.
+- Faction Quest.
+- Causal Quest.
+
+Mỗi nhiệm vụ cần có:
+
+- Quest ID.
+- Conditions.
+- Objectives.
+- Progress.
+- Rewards.
+- Failure Conditions.
+- Expiration.
+- Related NPC.
+- Related Location.
+- Related Events.
+- Completion State.
+
+Quest Engine phải theo dõi tiến trình và tự động cập nhật khi các hành động của người chơi thỏa mãn mục tiêu.
+
+Không để nhiệm vụ hoàn thành chỉ vì AI viết rằng người chơi đã hoàn thành.
+
+---
+
+# X. NPC & RELATIONSHIP SYSTEM
+
+## 10.1. NPC Profile
+
+Mỗi NPC cần có:
+
+- NPC ID.
+- Identity.
+- Background.
+- Personality.
+- Motivation.
+- Faction.
+- Location.
+- Current Status.
+- Relationship.
+- Memory.
+- Important Events.
+
+## 10.2. Relationship Dimensions
+
+- Trust.
+- Affinity.
+- Respect.
+- Hostility.
+
+Không gộp toàn bộ quan hệ thành một thanh điểm duy nhất.
+
+## 10.3. NPC Memory
+
+NPC cần ghi nhớ các sự kiện quan trọng:
+
+- Người chơi từng giúp đỡ.
+- Người chơi từng phản bội.
+- Lời hứa.
+- Giao dịch.
+- Xung đột.
+- Sự kiện ảnh hưởng đến lợi ích của NPC.
+
+Không cần lưu toàn bộ hội thoại. Chỉ lưu các sự kiện có ý nghĩa.
+
+## 10.4. Milestone Simulation
+
+NPC và thế lực không cần được mô phỏng liên tục từng giây.
+
+Chỉ cập nhật khi:
+
+- Thời gian đạt mốc.
+- Người chơi thay đổi khu vực.
+- Sự kiện lớn xảy ra.
+- Quan hệ thay đổi.
+- Nhiệm vụ liên quan được kích hoạt.
+
+---
+
+# XI. FACTION & ECONOMY SYSTEM
+
+## 11.1. Các thế lực dự kiến
+
+- Thanh Vân Tông.
+- Cửu Đại Tu Tiên Thế Gia.
+- Huyết Hà Điện.
+- Thiên Cơ Các.
+- Thiên Đạo Minh.
+
+Đây là các thế lực trong thiết kế đề xuất và cần được phát triển thành dữ liệu chính thức.
+
+## 11.2. Faction State
+
+Lưu trữ:
+
+- Faction ID.
+- Power.
+- Reputation.
+- Relationship.
+- Territory.
+- Resources.
+- Political State.
+- Important Events.
+
+## 11.3. Economy
+
+Quản lý:
+
+- Linh thạch.
+- Vật liệu.
+- Đan dược.
+- Giao dịch.
+- Giá cả.
+- Nguồn cung.
+- Nhu cầu.
+- Chi phí tu luyện.
+
+Kinh tế cần có cả nguồn tạo tài nguyên và cơ chế tiêu hao để tránh lạm phát.
+
+---
+
+# XII. TIME & EVENT SCHEDULER
+
+## 12.1. Time System
+
+Đơn vị thời gian:
+
+- Ngày.
+- Tháng.
+- Năm.
+- Kỷ nguyên.
+
+Mỗi hoạt động có thể tiêu hao thời gian khác nhau.
+
+## 12.2. Event Types
+
+- Main Story Event.
+- Side Event.
+- Random Event.
+- Location Event.
+- Causal Event.
+- World Event.
+
+## 12.3. Event Scheduler
+
+Luồng xử lý:
+
+1. Thu thập các sự kiện có khả năng xuất hiện.
+2. Kiểm tra điều kiện.
+3. Loại bỏ sự kiện không hợp lệ.
+4. Xác định mức độ ưu tiên.
+5. Tính trọng số.
+6. Chọn sự kiện.
+7. Chuyển sự kiện sang Event Engine.
+
+Thứ tự ưu tiên đề xuất:
+
+1. Main Story.
+2. Urgent Causal Event.
+3. Active Quest Event.
+4. Special Location Event.
+5. Generic Random Event.
+
+Random Event không được liên tục chen ngang và phá vỡ tiến trình cốt truyện chính.
+
+## 12.4. Event Policy
+
+- Unique.
+- Repeatable.
+- Cooldown.
+- Expiring.
+- Persistent.
+
+Mỗi sự kiện phải xác định rõ chính sách xuất hiện.
+
+---
+
+# XIII. STORY ENGINE & NARRATIVE ARCHITECTURE
+
+## 13.1. Story Engine
+
+Các thành phần:
+
+- Chapter Manager.
+- Scene Manager.
+- Choice Manager.
+- Condition Evaluator.
+- Branch Manager.
+- Narrative State.
+- Story Effect Resolver.
+
+## 13.2. Story Event Structure
+
+Mỗi sự kiện cần có:
+
+- Event ID.
+- Title.
+- Description.
+- Conditions.
+- Choices.
+- Effects.
+- Priority.
+- Weight.
+- Event Policy.
+- Next Scene.
+- Related Quest.
+- Related NPC.
+- Related Location.
+
+## 13.3. Story Choice
+
+Mỗi lựa chọn phải có:
+
+- Choice ID.
+- Text.
+- Requirements.
+- Check Type.
+- Difficulty.
+- Cost.
+- Effects.
+- Consequences.
+- Next Scene.
+
+Không cho phép AI tự tạo hiệu ứng ngoài danh sách được Game Engine hỗ trợ.
+
+## 13.4. Controlled Branching
+
+Không thiết kế mỗi lựa chọn thành một nhánh truyện độc lập kéo dài vô hạn.
+
+Sử dụng mô hình:
+
+Branch → State → Rejoin.
+
+Nghĩa là:
+
+- Người chơi có thể tạo ra những con đường khác nhau.
+- Các lựa chọn làm thay đổi trạng thái nhân vật, NPC, thế lực và thế giới.
+- Những nhánh có thể hội tụ tại các mốc cốt truyện chung.
+- Nội dung sau hội tụ vẫn phải phản ánh những lựa chọn trước đó.
+
+## 13.5. Ba lớp Narrative
+
+- Main Narrative: cốt truyện chính.
+- Branch Narrative: nhánh lựa chọn.
+- Reactive Narrative: phản ứng của thế giới với lịch sử người chơi.
+
+---
+
+# XIV. CAUSAL SYSTEM
+
+Đây là hệ thống quan trọng nhất để bảo đảm lựa chọn có hậu quả lâu dài.
+
+## 14.1. Causal State
+
+Chia thành:
+
+- Character Causality.
+- Relationship Causality.
+- Karma Causality.
+- World Causality.
+- Narrative Causality.
+- Faction Causality.
+
+## 14.2. Decision Weight
+
+Phân loại lựa chọn:
+
+- D1: Ảnh hưởng nhỏ, ví dụ vật phẩm hoặc tài nguyên.
+- D2: Ảnh hưởng trung bình, ví dụ quan hệ hoặc nhiệm vụ.
+- D3: Ảnh hưởng lớn, ví dụ tuyến truyện hoặc thế lực.
+- D4: Ảnh hưởng trọng yếu, có thể quyết định kết cục.
+
+## 14.3. Causal History
+
+Lưu các sự kiện quan trọng:
+
+- Người chơi đã làm gì.
+- Thời điểm.
+- Địa điểm.
+- NPC liên quan.
+- Thế lực liên quan.
+- Quyết định.
+- Hậu quả.
+- Các cờ trạng thái được tạo.
+
+Ví dụ:
+
+Người chơi cứu một gia tộc:
+
+- Tạo Causal Event.
+- Tăng Trust của NPC liên quan.
+- Mở khóa nhiệm vụ.
+- Thay đổi quan hệ thế lực.
+- Có thể tạo sự kiện hỗ trợ trong tương lai.
+
+Nếu người chơi phản bội gia tộc, những hệ quả phải khác biệt.
+
+## 14.4. Nguyên tắc
+
+Causal History là nguồn dữ liệu về những quyết định quan trọng.
+
+Story Engine, NPC Engine, Quest Engine và World Engine có thể đọc dữ liệu này nhưng không được tự ý sửa lịch sử gốc.
+
+---
+
+# XV. ENDING ENGINE
+
+## 15.1. Bảy kết cục chính
+
+1. E1 – Phàm Đạo Thành Tiên.
+2. E2 – Ngũ Hành Chí Tôn.
+3. E3 – Sát Phạt Đế Quân.
+4. E4 – Thiên Mệnh Chi Tử.
+5. E5 – Nhất Đại Đan Tôn.
+6. E6 – Nhân Quả Chi Chủ.
+7. E7 – Nghịch Thiên Độc Hành.
+
+## 15.2. Ending Eligibility
+
+Không quyết định kết cục chỉ bằng một điểm số tổng.
+
+Mỗi kết cục cần có:
+
+- Mandatory Conditions.
+- Realm Requirements.
+- Cultivation Path.
+- Important Flags.
+- Causal Conditions.
+- Quest Conditions.
+- Faction Conditions.
+- Narrative Conditions.
+
+## 15.3. Hai giai đoạn đánh giá
+
+Stage 1: Kiểm tra điều kiện bắt buộc.
+
+Stage 2: Xác định kết cục phù hợp nhất dựa trên hành trình.
+
+Nếu có nhiều kết cục hợp lệ, quyết định cuối cùng của người chơi có thể giải quyết lựa chọn.
+
+## 15.4. Anti-Contradiction
+
+Không cho phép tạo kết cục dựa trên những điều kiện đã mất hiệu lực.
+
+Ví dụ:
+
+- NPC đã chết không thể tiếp tục hỗ trợ.
+- Tông môn đã bị tiêu diệt không thể tiếp tục phát nhiệm vụ như bình thường.
+- Vật phẩm đã tiêu hao không thể được sử dụng lại.
+- Một sự kiện độc nhất không được kích hoạt lần thứ hai nếu không có quy tắc đặc biệt.
+
+---
+
+# XVI. AI NARRATIVE ARCHITECTURE
+
+AI được sử dụng để tạo trải nghiệm kể chuyện linh hoạt, nhưng không phải nguồn chân lý của gameplay.
+
+## 16.1. AI chịu trách nhiệm
+
+- Viết mô tả tình huống.
+- Viết lời thoại NPC.
+- Diễn đạt kết quả hành động.
+- Mô tả môi trường.
+- Tạo văn phong phù hợp với bối cảnh tu tiên.
+- Đưa ra các lựa chọn phù hợp với dữ liệu sự kiện được cung cấp.
+
+## 16.2. Game Engine chịu trách nhiệm
+
+- Kiểm tra điều kiện.
+- Tung xúc xắc.
+- Tính toán chỉ số.
+- Xử lý chiến đấu.
+- Xử lý tu luyện.
+- Kiểm tra vật phẩm.
+- Thay đổi quan hệ.
+- Cập nhật nhiệm vụ.
+- Ghi nhận nhân quả.
+- Xác định kết cục.
+
+## 16.3. Luồng xử lý AI
+
+Player Input
+→ Action Interpreter
+→ Game Controller
+→ Game Engine
+→ Deterministic Result
+→ Narrative Context
+→ AI Narrative Generator
+→ UI.
+
+AI chỉ nhận dữ liệu cần thiết để viết nội dung.
+
+AI không được tự tạo kết quả gameplay rồi ghi trực tiếp vào trạng thái game.
+
+Nếu AI đưa ra nội dung không phù hợp với trạng thái hiện tại, phải yêu cầu tạo lại hoặc sử dụng phản hồi an toàn từ hệ thống.
+
+---
+
+# XVII. CANONICAL GAME STATE
+
+Game State Manager là nguồn dữ liệu trạng thái chính thức duy nhất.
+
+## 17.1. Mười nhóm trạng thái
+
+1. Character State.
+2. Cultivation State.
+3. Attribute State.
+4. Inventory State.
+5. Combat State.
+6. Quest State.
+7. Narrative State.
+8. Relationship State.
+9. World State.
+10. Causal History.
+
+## 17.2. Authority Boundaries
+
+Mỗi hệ thống sở hữu trạng thái của mình.
+
+Ví dụ:
+
+- Cultivation Engine sở hữu cảnh giới và tiến trình tu luyện.
+- Inventory Engine sở hữu số lượng vật phẩm.
+- Combat Engine sở hữu kết quả chiến đấu.
+- Quest Engine sở hữu trạng thái nhiệm vụ.
+- NPC Engine sở hữu trạng thái NPC.
+- Causal System sở hữu lịch sử nhân quả.
+- World Engine sở hữu trạng thái thế giới.
+
+Các hệ thống có thể đọc dữ liệu của nhau nhưng không được tùy tiện ghi đè trạng thái do hệ thống khác sở hữu.
+
+## 17.3. State Invariants
+
+Mọi thay đổi phải kiểm tra các điều kiện bất biến:
+
+- Không có vật phẩm âm.
+- Không sử dụng vật phẩm đã bị tiêu hao.
+- Không vượt quá giới hạn chỉ số nếu hệ thống quy định.
+- Không đột phá khi thiếu điều kiện.
+- Không hoàn thành nhiệm vụ khi mục tiêu chưa đạt.
+- Không kích hoạt sự kiện độc nhất nhiều lần.
+- Không sử dụng trạng thái NPC không còn hợp lệ.
+
+---
+
+# XVIII. GAME ACTION PIPELINE
+
+Mọi thao tác gameplay quan trọng phải đi qua một pipeline thống nhất.
+
+## 18.1. GameAction
+
+Mỗi hành động có:
+
+- actionId.
+- type.
+- payload.
+- source.
+- createdAt.
+
+Các loại hành động dự kiến:
+
+- cultivate.
+- breakthrough.
+- explore.
+- attack.
+- use_item.
+- dialogue.
+- quest_accept.
+- story_choice.
+- equip_item.
+- travel.
+- interact.
+
+## 18.2. Pipeline
+
+1. Receive Input.
+2. Interpret Input.
+3. Normalize GameAction.
+4. Validate Preconditions.
+5. Route to Correct Engine.
+6. Resolve Deterministic Outcome.
+7. Validate State Invariants.
+8. Commit State.
+9. Record Causal History.
+10. Sync Persistence.
+11. Generate Narrative.
+12. Render UI.
+
+## 18.3. Reliability
+
+- Mỗi actionId chỉ được thực thi một lần.
+- Retry không được tạo thêm phần thưởng hoặc tiêu hao vật phẩm lần thứ hai.
+- RNG cần có seed phù hợp để tái lập kết quả khi cần.
+- Nếu hành động không hợp lệ, không được cập nhật một phần trạng thái.
+- Nếu quá trình lưu dữ liệu thất bại, phải có cơ chế khôi phục hoặc xử lý lỗi rõ ràng.
+
+---
+
+# XIX. SAVE, LOAD & PERSISTENCE
+
+## 19.1. Save Data
+
+Lưu toàn bộ trạng thái cần thiết:
+
+- Character.
+- Cultivation.
+- Attributes.
+- Inventory.
+- Combat.
+- Quests.
+- Story.
+- NPC.
+- Relationships.
+- Factions.
+- World.
+- Causal History.
+- Time.
+- RNG State nếu cần.
+
+## 19.2. Save Architecture
+
+- Save Slots.
+- Autosave.
+- Manual Save.
+- Save Version.
+- Migration.
+- Validation.
+- Recovery.
+
+## 19.3. Nguyên tắc
+
+Không lưu riêng từng màn hình theo cách tạo ra nhiều trạng thái mâu thuẫn.
+
+Save Manager phải lưu một snapshot nhất quán của Canonical Game State.
+
+IndexedDB có thể được cân nhắc cho phiên bản web nếu cần lưu trữ dữ liệu lớn; localStorage có thể phù hợp cho prototype nhỏ.
+
+Lựa chọn cuối cùng phải dựa trên kiến trúc và mã nguồn hiện tại.
+
+---
+
+# XX. TECHNICAL ARCHITECTURE
+
+## 20.1. Bốn lớp chính
+
+### Presentation Layer
+- UI.
+- Components.
+- Screens.
+- Player Interaction.
+
+### Application Layer
+- Game Controller.
+- Action Interpreter.
+- Game State Manager.
+- Action Pipeline.
+
+### Gameplay Layer
+- Story Engine.
+- Event Engine.
+- Causal System.
+- Character Engine.
+- Cultivation Engine.
+- Combat Engine.
+- Inventory Engine.
+- Quest Engine.
+- NPC Engine.
+- Relationship Engine.
+- Faction Engine.
+- World Engine.
+- Time Engine.
+- Ending Engine.
+- D20 Resolver.
+
+### Data & Persistence Layer
+- Game Data.
+- State Store.
+- Save Manager.
+- Event History.
+- Validation.
+- Migration.
+
+## 20.2. Shared Infrastructure
+
+Các thành phần dùng chung:
+
+- Game State Manager.
+- Event Bus.
+- RNG Service.
+- Validator.
+- Config Manager.
+- Persistence Adapter.
+- Narrative Adapter.
+
+Không để từng module tự xây một hệ thống lưu trữ và quản lý trạng thái riêng.
+
+## 20.3. Folder Structure đề xuất
+
+Đây là cấu trúc tham khảo. Phải đối chiếu với cấu trúc dự án thực tế trước khi áp dụng.
+
+src/
+  app/
+    GameController.ts
+    GameStateManager.ts
+    ActionPipeline.ts
+
+  systems/
+    character/
+    cultivation/
+    combat/
+    inventory/
+    story/
+    events/
+    causal/
+    quests/
+    npc/
+    relationships/
+    factions/
+    world/
+    time/
+    endings/
+
+  core/
+    events/
+    rng/
+    validation/
+    config/
+    types/
+
+  data/
+    characters/
+    items/
+    cultivation/
+    stories/
+    events/
+    quests/
+    npcs/
+    factions/
+    world/
+    endings/
+
+  persistence/
+    SaveManager.ts
+    SaveMigration.ts
+    SaveValidator.ts
+
+  narrative/
+    NarrativeAdapter.ts
+    NarrativeContextBuilder.ts
+
+  components/
+  screens/
+  hooks/
+  utils/
+
+Không được tạo toàn bộ cấu trúc trên một cách máy móc nếu dự án đã có kiến trúc tương đương.
+
+---
+
+# XXI. INKOS PLAY INTEGRATION — PHƯƠNG ÁN CÓ ĐIỀU KIỆN
+
+Một repository công khai đã được phân tích là Narcooo/inkos:
+
+https://github.com/Narcooo/inkos
+
+Đây là nền tảng AI Agent và tương tác thế giới, không phải game tu tiên hoàn chỉnh.
+
+Các thành phần đã được khảo sát:
+
+- PlayRunner.
+- PlayStore.
+- PlayDB.
+- PlayReducer.
+- PlayTurnAgent.
+- PlayEntity.
+- PlayEdge.
+- PlayStateSlot.
+- PlayEvent.
+- PlayCurrentState.
+
+Các thành phần này có thể là ứng viên tái sử dụng nếu dự án thực sự quyết định tích hợp InkOS.
+
+## 21.1. Nguyên tắc tích hợp
+
+Không để InkOS thay thế toàn bộ Gameplay Layer.
+
+Kiến trúc đề xuất:
+
+Presentation
+→ Game Controller
+→ Cultivation Gameplay Layer
+→ InkOS Adapter
+→ InkOS Play Core.
+
+## 21.2. Phân chia trách nhiệm
+
+Gameplay Layer:
+
+- Character.
+- Cultivation.
+- Combat.
+- Inventory.
+- Quest.
+- Causal History.
+- Ending.
+- Deterministic Rules.
+
+InkOS có thể hỗ trợ:
+
+- World Interaction.
+- Agent Execution.
+- Generic World State.
+- Graph Persistence.
+- Event Storage.
+- Narrative Interaction.
+
+## 21.3. Extension Point
+
+PlayRunner có thể sử dụng custom PlayTurnLike thông qua tùy chọn agents.turn.
+
+Đây là một điểm mở rộng đáng chú ý để tích hợp luồng xử lý riêng.
+
+Tuy nhiên, cần kiểm tra lại phiên bản và mã nguồn hiện tại trước khi triển khai.
+
+PlayReducer kiểm tra tính hợp lệ của cấu trúc mutation nhưng không thay thế được các quy tắc gameplay như điều kiện đột phá, số lượng linh thạch hoặc kết quả chiến đấu.
+
+## 21.4. Lưu ý bắt buộc
+
+Không được mặc định dự án hiện tại đã tích hợp InkOS.
+
+Chỉ triển khai phương án này sau khi kiểm tra repository và xác nhận quyết định sử dụng InkOS.
+
+---
+
+# XXII. STORY BRANCHING & SEVEN ENDINGS
+
+## 22.1. Vấn đề phân nhánh
+
+Không được viết một nhánh riêng cho mọi tổ hợp lựa chọn.
+
+Số lượng đường đi có thể tăng theo cấp số nhân.
+
+Giải pháp:
+
+Branch → State → Rejoin.
+
+## 22.2. Causal State
+
+Các lựa chọn làm thay đổi:
+
+- Nhân vật.
+- Quan hệ.
+- Đạo đức và nhân quả.
+- Thế lực.
+- Nhiệm vụ.
+- Trạng thái thế giới.
+- Hướng phát triển cốt truyện.
+
+## 22.3. Bảy kết cục
+
+Mỗi kết cục phải có:
+
+- Điều kiện mở khóa.
+- Những sự kiện quan trọng liên quan.
+- Những NPC hoặc thế lực liên quan.
+- Yêu cầu cảnh giới.
+- Các điều kiện nhân quả.
+- Những lựa chọn cuối cùng.
+
+Các kết cục phải thể hiện hành trình của người chơi, không chỉ là bảy nút lựa chọn ở chương cuối.
+
+---
+
+# XXIII. IMPLEMENTATION ROADMAP
+
+Phát triển theo từng giai đoạn.
+
+## Phase 0 — Repository Audit
+
+- Đọc cấu trúc dự án.
+- Đọc package.json.
+- Xác định framework và kiến trúc.
+- Kiểm tra toàn bộ gameplay hiện tại.
+- Kiểm tra hệ thống lưu trữ.
+- Kiểm tra các module đã có.
+- Kiểm tra luồng lựa chọn và cập nhật trạng thái.
+- Xác định các hệ thống bị trùng lặp.
+- Xác định các module chưa được tích hợp.
+
+Không viết lại dự án ở giai đoạn này.
+
+## Phase 1 — Core Foundation
+
+- Canonical Game State.
+- Game Controller.
+- Game Action Pipeline.
+- State Validator.
+- Event Bus.
+- RNG Service.
+
+## Phase 2 — Story Gameplay
+
+- Story Engine.
+- Event Engine.
+- Choice Resolver.
+- Condition Evaluator.
+- Causal History.
+- Narrative Adapter.
+
+## Phase 3 — Character & Progression
+
+- Character Engine.
+- Cultivation Engine.
+- Inventory Engine.
+- Item Effects.
+- Breakthrough System.
+
+## Phase 4 — World Simulation
+
+- World Engine.
+- Exploration.
+- NPC Engine.
+- Relationship Engine.
+- Quest Engine.
+- Faction Engine.
+- Time Engine.
+
+## Phase 5 — Combat & Balance
+
+- Combat Engine.
+- Skill System.
+- Equipment Effects.
+- D20 Resolver.
+- Balance Testing.
+
+## Phase 6 — Narrative Content & Endings
+
+- Main Story.
+- Branching Narrative.
+- Reactive Narrative.
+- Seven Endings.
+- Anti-Contradiction Validation.
+
+## Phase 7 — Release Preparation
+
+- Save/Load.
+- Migration.
+- Performance.
+- Error Handling.
+- UI/UX.
+- Regression Tests.
+- Acceptance Tests.
+
+---
+
+# XXIV. MVP SCOPE
+
+Phiên bản MVP không cần triển khai toàn bộ thế giới ngay lập tức.
+
+Phạm vi mục tiêu đề xuất:
+
+- Một khu vực khởi đầu.
+- Nhân vật chính Lâm Phàm.
+- Phàm Nhân và Luyện Khí.
+- Khoảng 20–30 sự kiện.
+- Khoảng 5–8 NPC.
+- Khoảng 3–5 nhiệm vụ.
+- Tu luyện cơ bản.
+- Đột phá cơ bản.
+- Inventory.
+- Một số vật phẩm.
+- Combat cơ bản.
+- Quan hệ NPC.
+- Causal History.
+- Một kết cục thử nghiệm.
+- Save/Load.
+
+Các con số trên là mục tiêu tham khảo, có thể điều chỉnh theo khả năng và cấu trúc dự án.
+
+---
+
+# XXV. TESTING ARCHITECTURE
+
+Mỗi module cần có unit test và integration test phù hợp.
+
+## 25.1. Core Tests
+
+- GST-01: State Initialization.
+- GST-02: State Consistency.
+- GST-03: State Ownership.
+- GST-04: Invalid State Rejection.
+- GST-05: Duplicate Action Prevention.
+
+## 25.2. Story Tests
+
+- STORY-01: Event Conditions.
+- STORY-02: Choice Requirements.
+- STORY-03: Choice Effects.
+- STORY-04: Branching.
+- STORY-05: Story Convergence.
+- STORY-06: Invalid Choice Rejection.
+
+## 25.3. Event Tests
+
+- EVENT-01: Candidate Collection.
+- EVENT-02: Event Priority.
+- EVENT-03: Weighted Selection.
+- EVENT-04: Unique Event.
+- EVENT-05: Cooldown.
+- EVENT-06: Main Story Protection.
+
+## 25.4. Cultivation Tests
+
+- CULT-01: Cultivation Progress.
+- CULT-02: Resource Cost.
+- CULT-03: Breakthrough Requirements.
+- CULT-04: Breakthrough Outcome.
+- CULT-05: Invalid Breakthrough Rejection.
+
+## 25.5. Combat Tests
+
+- COMBAT-01: Battle Initialization.
+- COMBAT-02: Damage Calculation.
+- COMBAT-03: Critical Hit.
+- COMBAT-04: Defense.
+- COMBAT-05: Battle Result.
+- COMBAT-06: Combat Consequences.
+
+## 25.6. Persistence Tests
+
+- SAVE-01: Save Creation.
+- SAVE-02: Load State.
+- SAVE-03: Data Integrity.
+- SAVE-04: Version Migration.
+- SAVE-05: Recovery.
+- SAVE-06: Duplicate Save Prevention.
+
+## 25.7. Integration Tests
+
+Phải kiểm tra các luồng thực tế:
+
+1. Nhận vật phẩm → sử dụng → cập nhật Inventory → cập nhật Character.
+2. Tu luyện → tăng tiến trình → đạt điều kiện → đột phá.
+3. Chọn lựa → kiểm tra → áp dụng hậu quả → lưu Causal History.
+4. Chiến đấu → kết quả → cập nhật nhiệm vụ → cập nhật thế giới.
+5. Gặp NPC → thay đổi quan hệ → mở khóa sự kiện.
+6. Hoàn thành nhiệm vụ → nhận thưởng → cập nhật trạng thái.
+7. Kết thúc hành trình → kiểm tra Ending Eligibility.
+
+---
+
+# XXVI. DEFINITION OF DONE
+
+Một module chỉ được xem là hoàn thành khi đáp ứng đầy đủ:
+
+1. Có trách nhiệm rõ ràng.
+2. Có Input và Output xác định.
+3. Có logic gameplay thực tế.
+4. Được tích hợp vào Game Controller.
+5. Được kết nối với Canonical Game State.
+6. Có validation.
+7. Có unit test.
+8. Có integration test phù hợp.
+9. Không làm hỏng module khác.
+10. Có bằng chứng kiểm thử.
+
+Không đánh dấu hoàn thành chỉ vì đã tạo file hoặc viết interface.
+
+---
+
+# XXVII. MAIN TECHNICAL RISKS
+
+## Risk 1: AI tự quyết định gameplay
+
+Giải pháp: Deterministic Game Engine là nguồn chân lý.
+
+## Risk 2: Story Engine chỉ hoạt động ở đầu game
+
+Giải pháp: Tất cả thao tác gameplay phải dùng Game Action Pipeline thống nhất.
+
+## Risk 3: Nhiều hệ thống lưu trạng thái trùng lặp
+
+Giải pháp: Canonical Game State và State Ownership.
+
+## Risk 4: Cốt truyện phân nhánh quá lớn
+
+Giải pháp: Controlled Branching và Story Convergence.
+
+## Risk 5: NPC và thế giới không phản ứng với quá khứ
+
+Giải pháp: Causal History và Milestone Simulation.
+
+## Risk 6: Save Data bị mất đồng bộ
+
+Giải pháp: Snapshot, Validation, Versioning và Recovery.
+
+## Risk 7: Tích hợp hệ thống mới làm hỏng gameplay cũ
+
+Giải pháp: Adapter Layer, Regression Tests và triển khai theo từng giai đoạn.
+
+## Risk 8: Tạo quá nhiều module nhưng không tích hợp
+
+Giải pháp: Definition of Done và Integration Tests.
+
+---
+
+# XXVIII. FINAL ACCEPTANCE CRITERIA
+
+Game chỉ được xem là đạt mục tiêu khi:
+
+- Người chơi có thể bắt đầu hành trình.
+- Nhân vật có trạng thái nhất quán.
+- Có thể tu luyện và đột phá.
+- Có thể nhận, sử dụng và trang bị vật phẩm.
+- Có thể chiến đấu.
+- Có thể khám phá thế giới.
+- Có thể gặp và tương tác với NPC.
+- Quan hệ NPC thay đổi theo hành động.
+- Nhiệm vụ có tiến trình thực tế.
+- Thế lực phản ứng với hành động.
+- Thời gian và sự kiện hoạt động.
+- Lựa chọn tạo hậu quả lâu dài.
+- Các nhánh truyện phản ánh trạng thái nhân quả.
+- Bảy kết cục có điều kiện riêng.
+- Save/Load bảo toàn dữ liệu.
+- AI không thể tự ý ghi đè quy tắc gameplay.
+- Những thao tác gameplay thực sự được kết nối với nhau.
+
+---
+
+# XXIX. YÊU CẦU THỰC HIỆN ĐỐI VỚI GOOGLE AI STUDIO
+
+Đây là tài liệu kiến trúc tổng thể của dự án, KHÔNG phải yêu cầu viết lại toàn bộ game ngay lập tức.
+
+Trước khi thay đổi mã nguồn, hãy thực hiện các bước sau:
+
+## STEP 1 — SOURCE CODE AUDIT
+
+Đọc mã nguồn hiện tại và xác định:
+
+- Framework.
+- Cấu trúc thư mục.
+- Entry points.
+- State management.
+- Existing gameplay systems.
+- Story system.
+- Event system.
+- Cultivation system.
+- Combat system.
+- Inventory system.
+- Quest system.
+- NPC system.
+- Save/load.
+- AI integration.
+- Các luồng cập nhật trạng thái.
+
+Không được suy luận rằng module tồn tại chỉ vì tài liệu kiến trúc có nhắc đến nó.
+
+## STEP 2 — ARCHITECTURE MAPPING
+
+Tạo bảng đối chiếu:
+
+| Architecture Module | Existing File | Current Status | Missing Function | Integration Risk |
+|---|---|---|---|---|
+
+Phân loại:
+
+- IMPLEMENTED: Đã có và hoạt động.
+- PARTIAL: Đã có nhưng chưa hoàn chỉnh.
+- DISCONNECTED: Có module nhưng chưa được gameplay sử dụng.
+- DUPLICATED: Có nhiều logic trùng nhau.
+- MISSING: Chưa có.
+- BROKEN: Có lỗi.
+
+Mỗi kết luận phải dựa trên mã nguồn thực tế.
+
+## STEP 3 — GAMEPLAY FLOW AUDIT
+
+Đặc biệt kiểm tra vấn đề:
+
+Cốt truyện có thể hoạt động ở đầu game nhưng những thao tác sau đó vẫn chạy theo cơ chế game cũ.
+
+Hãy lần theo luồng thực tế:
+
+Player Input
+→ Action Handler
+→ Game Logic
+→ State Update
+→ Persistence
+→ Narrative
+→ UI.
+
+Xác định chính xác điểm mà Story Engine hoặc Gameplay Engine bị bỏ qua.
+
+Không chỉ kiểm tra việc có file hoặc có hàm, mà phải kiểm tra nơi chúng được gọi.
+
+## STEP 4 — IMPLEMENTATION PLAN
+
+Sau khi kiểm toán:
+
+1. Đưa ra kiến trúc hiện tại.
+2. Chỉ ra những điểm khác biệt với Master Architecture.
+3. Xác định những module có thể tái sử dụng.
+4. Xác định module cần sửa.
+5. Xác định module cần tạo mới.
+6. Xác định thứ tự triển khai.
+7. Đánh giá rủi ro ảnh hưởng gameplay hiện tại.
+8. Đề xuất kế hoạch kiểm thử.
+
+## STEP 5 — IMPLEMENTATION RULES
+
+Khi bắt đầu triển khai:
+
+- Không rewrite toàn bộ dự án.
+- Không xóa chức năng cũ khi chưa đánh giá tác động.
+- Không tạo hệ thống thứ hai nếu hệ thống tương đương đã tồn tại.
+- Không thay đổi nhiều module không liên quan trong một lần sửa.
+- Không tạo file giả chỉ để báo cáo đã hoàn thành.
+- Không tự nhận test đã chạy thành công nếu chưa chạy.
+- Không coi việc tạo interface là hoàn thành gameplay.
+- Không để AI tự quyết định các kết quả cần tính toán.
+- Giữ khả năng tương thích với dữ liệu save hiện tại.
+- Ưu tiên thay đổi nhỏ, có kiểm thử và có thể rollback.
+
+## STEP 6 — REPORTING
+
+Sau mỗi giai đoạn, báo cáo theo cấu trúc:
+
+1. Objective.
+2. Files Inspected.
+3. Files Created.
+4. Files Modified.
+5. Existing Logic Reused.
+6. Actual Implementation.
+7. Gameplay Integration.
+8. Tests Executed.
+9. Test Results.
+10. Remaining Issues.
+11. Next Phase.
+
+Phải phân biệt rõ:
+
+- Đã kiểm tra.
+- Đã đề xuất.
+- Đã triển khai.
+- Đã kiểm thử.
+- Chưa xác minh.
+
+Không được báo cáo một chức năng hoàn thành nếu nó chưa được tích hợp và kiểm thử.
+
+---
+
+# XXX. LỆNH BẮT ĐẦU
+
+Hãy bắt đầu bằng STEP 1 — SOURCE CODE AUDIT.
+
+Chưa triển khai tính năng mới.
+
+Chưa viết lại kiến trúc.
+
+Chưa tạo hàng loạt file.
+
+Trước tiên hãy đọc toàn bộ mã nguồn hiện có trong phạm vi có thể truy cập, xác định gameplay flow thực tế và lập báo cáo đối chiếu với MASTER GAME DESIGN & TECHNICAL ARCHITECTURE này.
+
+Mục tiêu đầu tiên không phải tạo thêm mã nguồn, mà là hiểu chính xác game hiện tại đang hoạt động như thế nào, những gì đã hoàn thành, những gì còn thiếu và làm thế nào để tích hợp toàn bộ kiến trúc mà không phá vỡ dự án hiện có.

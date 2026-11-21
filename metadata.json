@@ -1,0 +1,8 @@
+{
+  "name": "Hệ Thống Tu Tiên Ký",
+  "description": "Trò chơi nhập vai tu tiên dạng văn bản trong thế giới Thương Huyền Giới với hệ thống nhân quả, tu luyện, chiến đấu và đa kết cục.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
