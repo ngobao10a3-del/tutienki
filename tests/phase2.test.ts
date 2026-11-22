@@ -8,7 +8,8 @@ import { LOCATIONS } from '../src/game/content/world';
 import { EVENTS } from '../src/game/content/story';
 import { QUEST_DEFINITIONS } from '../src/game/content/quests';
 import { ENEMY_TEMPLATES } from '../src/game/content/enemies';
-import { ITEM_DEFINITIONS, getItemDefinition } from '../src/game/effects';
+import { ITEM_DEFINITIONS } from '../src/game/content/items';
+import { getItemDefinition } from '../src/game/effects';
 
 function makeGame(seed = 'phase2-test-seed'): GameController {
   const ctrl = new GameController({ initialStateOptions: { seed } });

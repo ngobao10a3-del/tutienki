@@ -13,14 +13,13 @@ export interface StoryChoice {
   readonly requirements?: readonly ChoiceRequirementFlag[];
   readonly weight: import('../../core/types').DecisionWeight;
   readonly domain: import('../../core/types').CausalCategory;
-  readonly consequences: readonly string[];
+  readonly consequences?: readonly string[];
   readonly successChance?: number;
   readonly successConsequences?: readonly string[];
   readonly failureConsequences?: readonly string[];
   readonly nextEventId?: string;
   readonly questId?: string;
 }
-
 export interface StoryEvent {
   readonly eventId: string;
   readonly title: string;
@@ -71,7 +70,6 @@ export const EVENTS: Record<string, StoryEvent> = {
         weight: 'D2',
         domain: 'character',
         consequences: ['canCot +1', 'Nền tảng thể chất vững hơn'],
-        nextEventId: null,
       },
       {
         choiceId: 'ch_listen_rumor',
@@ -151,7 +149,6 @@ export const EVENTS: Record<string, StoryEvent> = {
         weight: 'D3',
         domain: 'cultivation',
         consequences: ['Lĩnh ngộ lần đầu về tu luyện', 'Tiến độ tu luyện +20'],
-        nextEventId: null,
       },
     ],
   },

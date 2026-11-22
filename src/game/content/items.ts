@@ -1,4 +1,4 @@
-import { registerItems, type ItemDefinition } from './effects';
+import { registerItems, type ItemDefinition } from '../effects';
 
 export const ITEM_DEFINITIONS: readonly ItemDefinition[] = [
   {

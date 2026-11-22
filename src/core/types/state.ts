@@ -291,7 +291,8 @@ export type CausalCategory =
   | 'karma'
   | 'world'
   | 'narrative'
-  | 'faction';
+  | 'faction'
+  | 'cultivation';
 
 export interface CausalRecord {
   readonly id: string;

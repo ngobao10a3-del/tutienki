@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { GameController } from '../app/GameController';
 import { registerPhase1DebugProbes } from '../app/debugProbes';
 import { buildAllGameplayHandlers } from '../game/engines';
-import type { CanonicalGameState, GameResult, StoryChoice } from '../core/types';
-import { getEvent } from '../game/content/story';
+import type { CanonicalGameState, GameResult } from '../core/types';
+import { getEvent, type StoryChoice } from '../game/content/story';
 import { LOCATIONS } from '../game/content/world';
 import { saveGame, loadGame, listSaveSlots, SAVE_SLOTS, type SaveMeta, type SaveSlot } from '../game/saveSystem';
 import { checkEnding } from '../game/endings';
@@ -49,7 +49,7 @@ export function GameView() {
   const activeEvent = snapshot.narrative.activeEventId
     ? getEvent(snapshot.narrative.activeEventId)
     : snapshot.narrative.pendingEventIds.length > 0
-      ? getEvent(snapshot.narrative.pendingEventIds[0])
+      ? getEvent(snapshot.narrative.pendingEventIds[0]) ?? null
       : null;
 
   const handleChoice = (choice: StoryChoice) => {

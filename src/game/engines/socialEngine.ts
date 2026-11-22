@@ -110,7 +110,7 @@ const storyChoiceHandler: ActionHandler<any> = {
     let nextQuests = state.quests;
     let nextWorldFlags = state.world.worldFlags;
     let nextCharacter = state.character;
-    const notes: string[] = [...choice.consequences];
+    const notes: string[] = [...(choice.consequences ?? [])];
 
     // Deterministic resolution for chance-based choices
     if (choice.successChance !== undefined) {

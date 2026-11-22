@@ -117,7 +117,7 @@ const equipItemHandler: ActionHandler<any> = {
     const { itemInstanceId, slot } = action.payload;
 
     if (itemInstanceId === null) {
-      const current = state.inventory.equipped[slot];
+      const current = state.inventory.equipped[slot as keyof typeof state.inventory.equipped];
       if (!current) {
         return { ok: false, error: { category: 'BUSINESS_ERROR', code: 'SLOT_EMPTY', message: `Slot ${slot} đang trống.` } };
       }

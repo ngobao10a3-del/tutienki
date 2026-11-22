@@ -9,7 +9,10 @@ export class GamePatchBuilder {
 
   public worldTime(days: number): this {
     const time = advanceWorldTime(this.state.world.time, days);
-    this.inner.setDomain('world', { ...this.state.world, time });
+    this.inner.setDomain('world', {
+      ...this.state.world,
+      time: { ...this.state.world.time, ...time },
+    });
     return this;
   }
 
@@ -104,6 +107,11 @@ export class GamePatchBuilder {
       karmaScore: this.state.causal.karmaScore + karmaDelta,
       causalFlags: { ...this.state.causal.causalFlags, ...createdFlags },
     });
+    return this;
+  }
+
+  public quests(questsPatch: Partial<CanonicalGameState['quests']>): this {
+    this.inner.setDomain('quests', { ...this.state.quests, ...questsPatch });
     return this;
   }
 

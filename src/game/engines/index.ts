@@ -1,12 +1,10 @@
-import { RngService } from '../core/rng/RngService';
-import { EventBus } from '../core/events/EventBus';
-import type { ActionHandler, ActionHandlerOutput, CanonicalGameState, GameStatePatch } from '../core/types';
-import { StateValidator } from '../core/validation/StateValidator';
-import { buildCultivationHandlers } from './engines/cultivationEngine';
-import { buildInventoryHandlers } from './engines/inventoryEngine';
-import { buildCombatHandlers } from './engines/combatEngine';
-import { buildExplorationHandlers } from './engines/explorationEngine';
-import { buildSocialHandlers } from './engines/socialEngine';
+import type { ActionHandler, CanonicalGameState } from '../../core/types';
+import { StateValidator } from '../../core/validation/StateValidator';
+import { buildCultivationHandlers } from './cultivationEngine';
+import { buildInventoryHandlers } from './inventoryEngine';
+import { buildCombatHandlers } from './combatEngine';
+import { buildExplorationHandlers } from './explorationEngine';
+import { buildSocialHandlers } from './socialEngine';
 
 export function buildAllGameplayHandlers(): readonly ActionHandler<any>[] {
   return [
@@ -18,5 +16,6 @@ export function buildAllGameplayHandlers(): readonly ActionHandler<any>[] {
   ];
 }
 
-export { RngService, EventBus, StateValidator };
-export type { ActionHandler, ActionHandlerOutput, CanonicalGameState, GameStatePatch };
+export function validateState(state: CanonicalGameState): ReturnType<typeof StateValidator.validateState> {
+  return StateValidator.validateState(state);
+}
