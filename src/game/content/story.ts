@@ -332,6 +332,132 @@ export const EVENTS: Record<string, StoryEvent> = {
       },
     ],
   },
+  ev_ch2_arrival_market: {
+    eventId: 'ev_ch2_arrival_market',
+    title: 'Chợ Phượng Mậu — Chương II',
+    description: 'Sau những sự kiện ở Thanh Ngưu Trấn, ngươi theo đường thương trò tới Chợ Phượng Mậu dưới chân núi Thanh Vân. Khắp chợ rộ tin đồn: một thương đội của chín thế gia đã mất tích trong Hoang Linh Cốc, và treo thưởng cho ai tìm được manh mối.',
+    unique: true,
+    allowedDomains: ['narrative', 'quests', 'relationships', 'causal', 'character'],
+    choices: [
+      {
+        choiceId: 'ch2_meet_ba_chuong',
+        text: 'Tới tửu lầu Phượng Mậu gặp bà chủ để hỏi về thương đội.',
+        weight: 'D2',
+        domain: 'relationship',
+        consequences: ['quest_ch2_thuong_doi_mat_tich', 'trust_ba_chuong+5'],
+        nextEventId: 'ev_ch2_ba_chuong_task',
+      },
+      {
+        choiceId: 'ch2_meet_hoang_vi',
+        text: 'Tiếp cận tu sĩ Thiên Đạo Minh đang điều tra riêng.',
+        weight: 'D2',
+        domain: 'relationship',
+        consequences: ['flag_met_hoang_vi', 'trust_hoang_vi+5'],
+        nextEventId: 'ev_ch2_hoang_vi_suspicion',
+      },
+      {
+        choiceId: 'ch2_explore_first',
+        text: 'Chưa vội gặp ai, đi dò cốc trước đã.',
+        weight: 'D1',
+        domain: 'narrative',
+        consequences: ['Đến Hoang Linh Cốc mà không có manh mối'],
+      },
+    ],
+  },
+  ev_ch2_ba_chuong_task: {
+    eventId: 'ev_ch2_ba_chuong_task',
+    title: 'Nỗi Lo Của Bà Chương',
+    description: 'Bà Chương Phượng đặt xuống ly rượu: "Chồng ta đi cùng thương đội lần này. Nếu ngươi tìm được tin tức trong Hoang Linh Cốc, ta không hề tiếc linh thạch."',
+    unique: true,
+    allowedDomains: ['narrative', 'quests', 'relationships', 'causal'],
+    choices: [
+      {
+        choiceId: 'ch2_accept_search',
+        text: 'Nhận lời, hứa sẽ tìm tin tức về chồng bà.',
+        weight: 'D3',
+        domain: 'relationship',
+        consequences: ['quest_ch2_thuong_doi_mat_tich_active', 'trust_ba_chuong+10'],
+      },
+      {
+        choiceId: 'ch2_ask_reward_first',
+        text: 'Hỏi rõ phần thưởng trước khi nhận lời.',
+        weight: 'D2',
+        domain: 'karma',
+        consequences: ['trust_ba_chuong-5', 'Nhận thêm 20 linh thạch tạm ứng'],
+      },
+    ],
+  },
+  ev_ch2_hoang_vi_suspicion: {
+    eventId: 'ev_ch2_hoang_vi_suspicion',
+    title: 'Nghi Pháp Huyết Cốc',
+    description: 'Hoàng Vỹ kéo ngươi vào góc tối: "Ta nghi dưới cốc có kẻ luyện Huyết Công Pháp. Nếu ngươi tìm được bằng chứng, Thiên Đạo Minh sẽ không quên ơn."',
+    unique: true,
+    allowedDomains: ['narrative', 'quests', 'relationships', 'causal'],
+    choices: [
+      {
+        choiceId: 'ch2_alliance_hoang_vi',
+        text: 'Đồng ý hợp tác với Thiên Đạo Minh.',
+        weight: 'D3',
+        domain: 'faction',
+        consequences: ['flag_met_hoang_vi', 'trust_hoang_vi+10', 'faction_thien_dao_minh+2'],
+      },
+      {
+        choiceId: 'ch2_neutral_reply',
+        text: 'Giữ quan hệ trung lập, chỉ hứa sẽ báo nếu thấy gì.',
+        weight: 'D1',
+        domain: 'narrative',
+        consequences: ['trust_hoang_vi+3'],
+      },
+    ],
+  },
+  ev_ch2_camp_ruins: {
+    eventId: 'ev_ch2_camp_ruins',
+    title: 'Doanh Trại Đổ Nát',
+    description: 'Trong cốc, ngươi tìm thấy dấu tích doanh trại: xe hàng đổ nát, vết cháy đen, và một mảnh bùa lệnh quen thuộc của Huyết Hà Điện.',
+    unique: true,
+    allowedDomains: ['narrative', 'inventory', 'quests', 'combat', 'causal'],
+    choices: [
+      {
+        choiceId: 'ch2_investigate_camp',
+        text: 'Khảo sát kỹ dấu tích lấy bằng chứng.',
+        weight: 'D3',
+        domain: 'narrative',
+        successChance: 0.75,
+        successConsequences: ['obj_investigate_camp_done', 'Nhận Mảnh Bùa Lệnh Huyết', 'obj_find_mo_tham_hint'],
+        failureConsequences: ['Bị tàn nghi thức phát hiện, chiến đấu', 'obj_investigate_camp_done'],
+      },
+      {
+        choiceId: 'ch2_burn_camp',
+        text: 'Đốt sạch dấu tích hủy manh mối.',
+        weight: 'D2',
+        domain: 'karma',
+        consequences: ['obj_investigate_camp_done', 'flag_destroyed_camp_evidence', 'Karma giảm'],
+      },
+    ],
+  },
+  ev_ch2_mo_tham_reveal: {
+    eventId: 'ev_ch2_mo_tham_reveal',
+    title: 'Lời Của Lão Mô Thâm',
+    description: 'Lão Mô Thâm hé lộ: "Đêm đó ta thấy ánh sáng đỏ từ hang đông sâu trong cốc. Họ kéo thương đội vào đó... Ngươi muốn giữ mạng thì đừng để lộ tên ta."',
+    unique: true,
+    allowedDomains: ['narrative', 'relationships', 'quests', 'causal'],
+    choices: [
+      {
+        choiceId: 'ch2_promise_silence',
+        text: 'Hứa giữ bí mật danh tính lão.',
+        weight: 'D2',
+        domain: 'relationship',
+        consequences: ['trust_mo_tham+10', 'obj_find_mo_tham_done', 'flag_know_blood_cave'],
+      },
+      {
+        choiceId: 'ch2_pay_for_info',
+        text: 'Đưa 20 linh thạch xin thêm chi tiết.',
+        weight: 'D2',
+        domain: 'karma',
+        consequences: ['obj_find_mo_tham_done', 'flag_know_blood_cave', 'Mất 20 linh thạch', 'trust_mo_tham+5'],
+      },
+    ],
+  },
 };
 
 export const CHAPTER_01: ChapterDefinition = {
@@ -372,7 +498,31 @@ export const CHAPTER_01: ChapterDefinition = {
   ],
 };
 
-export const ALL_CHAPTERS: readonly ChapterDefinition[] = [CHAPTER_01];
+export const CHAPTER_02: ChapterDefinition = {
+  chapterId: 'chapter_02_cho_phuong_mau',
+  title: 'Chương II — Bí Ẩn Hoang Linh Cốc',
+  description: 'Dấu vết của thương đội mất tích dẫn ngươi sâu vào âm khí của Hoang Linh Cốc.',
+  completionFlag: 'flag_chapter_02_complete',
+  scenes: [
+    {
+      sceneId: 'scene_05_cho_phuong_mau',
+      chapterId: 'chapter_02_cho_phuong_mau',
+      title: 'Chợ Phượng Mậu',
+      intro: 'Chợ lớn dưới chân núi, rộ tin đồn thương đội mất tích.',
+      locationId: 'loc_cho_phuong_mau',
+      entryEventId: 'ev_ch2_arrival_market',
+    },
+    {
+      sceneId: 'scene_06_hoang_linh_coc',
+      chapterId: 'chapter_02_cho_phuong_mau',
+      title: 'Hoang Linh Cốc',
+      intro: 'Âm khí tràn opaque, tiếng gió rít qua vách cốc.',
+      locationId: 'loc_hoang_linh_coc',
+    },
+  ],
+};
+
+export const ALL_CHAPTERS: readonly ChapterDefinition[] = [CHAPTER_01, CHAPTER_02];
 
 export function getEvent(eventId: string): StoryEvent | undefined {
   return EVENTS[eventId];

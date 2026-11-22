@@ -133,7 +133,7 @@ const breakthroughHandler: ActionHandler<any> = {
   },
 };
 
-function ctx_nextFloat(ctx: { nextFloat: () => number }): number {
+function ctx_nextFloat(ctx: { nextFloat: () => number; state: import('../../core/types').CanonicalGameState }): number {
   return ctx.nextFloat();
 }
 
