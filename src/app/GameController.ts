@@ -98,4 +98,33 @@ export class GameController {
     });
     return nextSnapshot;
   }
+
+  public loadState(savedState: CanonicalGameState): Readonly<CanonicalGameState> {
+    const prevVersion = this.stateManager.getVersion();
+    const snapshot = this.stateManager.restoreState(savedState);
+    this.rng.setState(snapshot.rngState);
+    this.eventBus.publish('state:reset', {
+      stateVersion: snapshot.stateVersion,
+      seed: snapshot.seed,
+      stateSnapshot: snapshot,
+    });
+    this.eventBus.publish('state:changed', {
+      previousVersion: prevVersion,
+      stateVersion: snapshot.stateVersion,
+      updatedDomains: [
+        'character',
+        'cultivation',
+        'attributes',
+        'inventory',
+        'combat',
+        'quests',
+        'narrative',
+        'relationships',
+        'world',
+        'causal',
+      ],
+      stateSnapshot: snapshot,
+    });
+    return snapshot;
+  }
 }

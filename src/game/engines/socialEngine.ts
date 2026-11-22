@@ -34,17 +34,49 @@ const dialogueHandler: ActionHandler<any> = {
       impact: 'neutral' as const,
     };
 
+    const dialogueReplies: Record<string, string> = {
+      npc_tran_doanh: 'Trần Doanh lau mồ hôi trên trán: "Luyện khí hay rèn sắt cũng vậy, tâm không tĩnh thì kiếm ắt gãy, đan điền ắt vỡ. Ngươi có chí hướng là tốt, nhưng đừng vội vàng."',
+      npc_tieu_thien: 'Tiểu Thiên khẽ chớp mắt cười: "Thương Huyền Giới rộng lớn vô cùng, Thanh Ngưu Trấn chỉ là hạt cát ven sông. Tin tức của ta lúc nào cũng đúng giá."',
+      npc_luu_suv: 'Lưu Sư Viễn chắp tay: "Sắp tới kỳ đại khảo chiêu sinh của Thanh Vân Tông, hạ giới tán tu ai ai cũng muốn một bước lên mây. Ngươi hãy bảo trọng."',
+      npc_hac_kiem: 'Hắc Diện Kiếm Khách lạnh lùng liếc nhìn ngươi: "Rừng sâu kiếm lạc vô tình. Kẻ tò mò ở Thương Huyền Giới này thường chẳng sống được lâu."',
+    };
+    const reply = dialogueReplies[npc.id] ?? `${npc.name}: "Đạo hữu cũng tới đây tầm đạo sao?"`;
+
+    let nextQuests = state.quests;
+    for (const [qid, q] of Object.entries(nextQuests.quests)) {
+      if (nextQuests.activeQuestIds.includes(qid) && q.status === 'active') {
+        let changed = false;
+        const newObjectives = q.objectives.map((obj) => {
+          if (!obj.completed && obj.id === 'obj_talk_tran_doanh' && npc.id === 'npc_tran_doanh') {
+            changed = true;
+            return { ...obj, current: obj.required, completed: true };
+          }
+          return obj;
+        });
+        if (changed) {
+          nextQuests = {
+            ...nextQuests,
+            quests: {
+              ...nextQuests.quests,
+              [qid]: { ...q, objectives: newObjectives },
+            },
+          };
+        }
+      }
+    }
+
     const patch = builder
       .worldTime(1)
       .relationships({
         ...state.relationships,
         npcs: { ...state.relationships.npcs, [npc.id]: { ...npc, relationship, memories: [...npc.memories, memory] } },
       })
+      .quests(nextQuests)
       .world({ worldFlags: { ...state.world.worldFlags, [`flag_met_${npc.id.replace('npc_', '')}`]: true } })
-      .logEvent(`[Đối thoại] ${npc.name} — chủ đề ${action.payload.topicId}.`)
+      .logEvent(`[Đối thoại] ${npc.name}: ${reply}`)
       .build();
 
-    return { ok: true, patch, summary: `${npc.name}: "…" (câu chuyện đang tiếp diễn).` };
+    return { ok: true, patch, summary: reply };
   },
 };
 
@@ -89,7 +121,7 @@ const questAcceptHandler: ActionHandler<any> = {
 
 const storyChoiceHandler: ActionHandler<any> = {
   actionType: 'story_choice',
-  allowedDomains: ['narrative', 'character', 'cultivation', 'relationships', 'inventory', 'quests', 'world', 'combat', 'causal'],
+  allowedDomains: ['narrative', 'character', 'attributes', 'cultivation', 'relationships', 'inventory', 'quests', 'world', 'combat', 'causal'],
   handle: (action, ctx) => {
     const state = ctx.state;
     const builder = new GamePatchBuilder(state);

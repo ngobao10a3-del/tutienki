@@ -7,6 +7,7 @@ import {
   type ValidationResult,
 } from '../core/types';
 import { StateValidator } from '../core/validation/StateValidator';
+import { NPC_TEMPLATES, makeNpc } from '../game/content/world';
 
 const ALL_DOMAINS: readonly StateDomain[] = [
   'character',
@@ -156,7 +157,7 @@ export function createInitialCanonicalState(
       ],
     },
     relationships: {
-      npcs: {},
+      npcs: Object.fromEntries(NPC_TEMPLATES.map((tmpl) => [tmpl.id, makeNpc(tmpl)])),
       factions: {},
     },
     world: {
@@ -311,6 +312,17 @@ export class GameStateManager {
       );
     }
     this.#state = deepClone(next);
+    return this.getSnapshot();
+  }
+
+  public restoreState(savedState: CanonicalGameState): Readonly<CanonicalGameState> {
+    const check = StateValidator.validateState(savedState);
+    if (!check.valid) {
+      throw new Error(
+        `Không thể phục hồi trạng thái: ${check.issues.map((i) => i.message).join('; ')}`,
+      );
+    }
+    this.#state = deepClone(savedState);
     return this.getSnapshot();
   }
 }

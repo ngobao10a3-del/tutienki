@@ -47,7 +47,7 @@ export function GameView() {
   };
 
   const activeEvent = snapshot.narrative.activeEventId
-    ? getEvent(snapshot.narrative.activeEventId)
+    ? getEvent(snapshot.narrative.activeEventId) ?? null
     : snapshot.narrative.pendingEventIds.length > 0
       ? getEvent(snapshot.narrative.pendingEventIds[0]) ?? null
       : null;
@@ -78,8 +78,8 @@ export function GameView() {
   const handleLoad = (slot: SaveSlot) => {
     const loaded = loadGame(slot);
     if (loaded.ok) {
-      const next = controller.resetGame();
-      setSnapshot({ ...next, ...loaded.state });
+      const restored = controller.loadState(loaded.state);
+      setSnapshot(restored);
       setSaveOverlay(null);
       setEnding(null);
     }
@@ -107,7 +107,12 @@ export function GameView() {
           <ActionPanel snapshot={snapshot} dispatch={dispatch} controller={controller} />
         </div>
         <div>
-          <CharacterPanel snapshot={snapshot} expRequired={expRequiredFor(snapshot.cultivation)} />
+          <CharacterPanel
+            snapshot={snapshot}
+            expRequired={expRequiredFor(snapshot.cultivation)}
+            dispatch={dispatch}
+            controller={controller}
+          />
         </div>
       </div>
       {saveOverlay && (

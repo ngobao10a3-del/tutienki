@@ -1,4 +1,4 @@
-import type { ActionHandler } from '../../core/types';
+import type { ActionHandler, ActionResolutionContext } from '../../core/types';
 import { GamePatchBuilder } from '../GamePatchBuilder';
 import { getItemDefinition, sumEffects } from '../effects';
 import { expRequiredFor, maxStageFor, realmIndex } from '../stats';
@@ -35,7 +35,7 @@ export function buildCultivationHandlers(): readonly ActionHandler<any>[] {
 const cultivateHandler: ActionHandler<any> = {
   actionType: 'cultivate',
   allowedDomains: ['cultivation', 'world', 'attributes', 'inventory', 'narrative', 'causal'],
-  handle: (action: { payload: CultivatePayload }, ctx: { state: import('../../core/types').CanonicalGameState }) => {
+  handle: (action: { payload: CultivatePayload }, ctx: ActionResolutionContext) => {
     const { activity, durationDays, supportItemInstanceId } = action.payload;
     const state = ctx.state;
     const builder = new GamePatchBuilder(state);
@@ -73,7 +73,7 @@ const cultivateHandler: ActionHandler<any> = {
 const breakthroughHandler: ActionHandler<any> = {
   actionType: 'breakthrough',
   allowedDomains: ['cultivation', 'world', 'character', 'narrative', 'causal', 'inventory'],
-  handle: (action: { actionId: string; payload: BreakthroughPayload }, ctx: { state: import('../../core/types').CanonicalGameState }) => {
+  handle: (action: { actionId: string; payload: BreakthroughPayload }, ctx: ActionResolutionContext) => {
     const state = ctx.state;
     const builder = new GamePatchBuilder(state);
     const cultivation = state.cultivation;

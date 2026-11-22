@@ -10,6 +10,7 @@ import { QUEST_DEFINITIONS } from '../src/game/content/quests';
 import { ENEMY_TEMPLATES } from '../src/game/content/enemies';
 import { ITEM_DEFINITIONS } from '../src/game/content/items';
 import { getItemDefinition } from '../src/game/effects';
+import { addItemToInventory } from '../src/game/engines/inventoryEngine';
 
 function makeGame(seed = 'phase2-test-seed'): GameController {
   const ctrl = new GameController({ initialStateOptions: { seed } });
@@ -302,5 +303,187 @@ describe('Phase 2 — RngService regression', () => {
     assert.equal(rng.getState(), rng.getState());
     const v = rng.nextInt(1, 5);
     assert.ok(v >= 1 && v <= 5);
+  });
+});
+
+describe('Phase 2 — Save/Load Restoration & Gameplay Continuation', () => {
+  it('SAV-01: Phục hồi trạng thái (loadState) khôi phục chính xác toàn bộ canonical state và RNG', () => {
+    const ctrl1 = makeGame('save-test-seed');
+    ctrl1.dispatch({
+      actionId: 'sav_01_a1',
+      type: 'cultivate',
+      source: 'test',
+      createdAt: 100,
+      payload: { activity: 'tinh_toa', durationDays: 2 },
+    });
+    ctrl1.dispatch({
+      actionId: 'sav_01_a2',
+      type: 'quest_accept',
+      source: 'test',
+      createdAt: 101,
+      payload: { questId: 'quest_ch1_loi_hen_rung' },
+    });
+    const savedSnapshot = ctrl1.getState();
+
+    const ctrl2 = makeGame('different-seed');
+    const restored = ctrl2.loadState(savedSnapshot);
+
+    assert.equal(restored.cultivation.progress, savedSnapshot.cultivation.progress);
+    assert.equal(restored.world.time.totalDays, savedSnapshot.world.time.totalDays);
+    assert.equal(restored.rngState, savedSnapshot.rngState);
+    assert.equal(restored.stateVersion, savedSnapshot.stateVersion);
+    assert.deepEqual(restored.quests.activeQuestIds, savedSnapshot.quests.activeQuestIds);
+  });
+
+  it('SAV-02: Hành động tiếp theo sau khi load tiếp tục từ trạng thái đã nạp và duy trì determinism', () => {
+    const ctrl1 = makeGame('continuation-seed');
+    ctrl1.dispatch({
+      actionId: 'sav_cont_1',
+      type: 'cultivate',
+      source: 'test',
+      createdAt: 1,
+      payload: { activity: 'tinh_toa', durationDays: 1 },
+    });
+    const snapshotAtCheckpoint = ctrl1.getState();
+
+    // Ctrl1 proceeds with next action
+    const res1 = ctrl1.dispatch({
+      actionId: 'sav_cont_2',
+      type: 'explore',
+      source: 'test',
+      createdAt: 2,
+      payload: { locationId: snapshotAtCheckpoint.world.currentLocationId },
+    });
+
+    // Ctrl2 loads checkpoint then performs identical next action
+    const ctrl2 = makeGame('other-seed');
+    ctrl2.loadState(snapshotAtCheckpoint);
+    const res2 = ctrl2.dispatch({
+      actionId: 'sav_cont_2',
+      type: 'explore',
+      source: 'test',
+      createdAt: 2,
+      payload: { locationId: snapshotAtCheckpoint.world.currentLocationId },
+    });
+
+    assert.equal(res1.ok, true);
+    assert.equal(res2.ok, true);
+    assert.equal(res1.stateSnapshot.stateVersion, res2.stateSnapshot.stateVersion);
+    assert.equal(res1.stateSnapshot.rngState, res2.stateSnapshot.rngState);
+    assert.equal(res1.stateSnapshot.inventory.spiritStones, res2.stateSnapshot.inventory.spiritStones);
+    assert.equal(res1.stateSnapshot.cultivation.progress, res2.stateSnapshot.cultivation.progress);
+  });
+});
+
+describe('Phase 2 — Equipment & Deterministic Item IDs', () => {
+  it('INV-03: Trang bị và tháo vật phẩm (equip_item) hoạt động chính xác qua pipeline', () => {
+    const ctrl = makeGame();
+    // Use story choice or directly modify inventory to have an equippable weapon
+    const beforeState = ctrl.getState();
+    const weaponDef = getItemDefinition('kiem_sat_thu')!;
+    const nextInv = addItemToInventory(beforeState.inventory, weaponDef, 1);
+    const itemInst = nextInv.items.find((it) => it.itemId === 'kiem_sat_thu')!;
+
+    // Load state with the weapon in bag
+    ctrl.loadState({ ...beforeState, inventory: nextInv });
+
+    // Equip weapon
+    const equipRes = ctrl.dispatch({
+      actionId: 'inv_equip_1',
+      type: 'equip_item',
+      source: 'test',
+      createdAt: Date.now(),
+      payload: { itemInstanceId: itemInst.instanceId, slot: 'weapon' },
+    });
+    assert.equal(equipRes.ok, true);
+    assert.equal(equipRes.stateSnapshot.inventory.equipped.weapon, itemInst.instanceId);
+
+    // Unequip weapon
+    const unequipRes = ctrl.dispatch({
+      actionId: 'inv_unequip_1',
+      type: 'equip_item',
+      source: 'test',
+      createdAt: Date.now(),
+      payload: { itemInstanceId: null, slot: 'weapon' },
+    });
+    assert.equal(unequipRes.ok, true);
+    assert.equal(unequipRes.stateSnapshot.inventory.equipped.weapon, null);
+  });
+
+  it('INV-04: Deterministic item ID generation không dùng Math.random và không trùng lặp', () => {
+    const ctrl = makeGame();
+    let inv = ctrl.getState().inventory;
+    const def = getItemDefinition('kiem_sat_thu')!; // non-stackable
+    const idSet = new Set<string>();
+
+    for (let i = 0; i < 5; i++) {
+      inv = addItemToInventory(inv, def, 1);
+    }
+    for (const it of inv.items.filter((x) => x.itemId === 'kiem_sat_thu')) {
+      assert.ok(!idSet.has(it.instanceId), `Trùng instanceId: ${it.instanceId}`);
+      assert.match(it.instanceId, /^item_inst_kiem_sat_thu_\d+$/);
+      idSet.add(it.instanceId);
+    }
+    assert.equal(idSet.size, 5);
+  });
+});
+
+describe('Phase 2 — Market & Dialogue Integration', () => {
+  it('MKT-01: Mua vật phẩm tại chợ phiên giảm linh thạch và thêm vật phẩm', () => {
+    const ctrl = makeGame();
+    const beforeStones = ctrl.getState().inventory.spiritStones;
+    const res = ctrl.dispatch({
+      actionId: 'mkt_buy_1',
+      type: 'interact',
+      source: 'test',
+      createdAt: Date.now(),
+      payload: { targetType: 'market', targetId: 'kho_luong', interactionType: 'buy' },
+    });
+    assert.equal(res.ok, true);
+    assert.equal(res.stateSnapshot.inventory.spiritStones, beforeStones - 2);
+  });
+
+  it('MKT-02: Mua vật phẩm từ chối khi không đủ linh thạch', () => {
+    const ctrl = makeGame();
+    // Price of truc_co_dan is 180, player starts with 5
+    const res = ctrl.dispatch({
+      actionId: 'mkt_buy_fail_1',
+      type: 'interact',
+      source: 'test',
+      createdAt: Date.now(),
+      payload: { targetType: 'market', targetId: 'truc_co_dan', interactionType: 'buy' },
+    });
+    assert.equal(res.ok, false);
+    if (!res.ok) {
+      assert.equal(res.error.code, 'INSUFFICIENT_FUNDS');
+    }
+  });
+
+  it('MKT-03: Bán vật phẩm thu về linh thạch', () => {
+    const ctrl = makeGame();
+    const beforeStones = ctrl.getState().inventory.spiritStones;
+    const res = ctrl.dispatch({
+      actionId: 'mkt_sell_1',
+      type: 'interact',
+      source: 'test',
+      createdAt: Date.now(),
+      payload: { targetType: 'market', targetId: 'kho_luong', interactionType: 'sell' },
+    });
+    assert.equal(res.ok, true);
+    assert.ok(res.stateSnapshot.inventory.spiritStones > beforeStones);
+  });
+
+  it('SOC-04: Đối thoại với NPC có mặt tại địa điểm thành công và cập nhật mối quan hệ', () => {
+    const ctrl = makeGame();
+    const beforeTrust = ctrl.getState().relationships.npcs['npc_tran_doanh'].relationship.trust;
+    const res = ctrl.dispatch({
+      actionId: 'soc_talk_tran_doanh',
+      type: 'dialogue',
+      source: 'test',
+      createdAt: Date.now(),
+      payload: { npcId: 'npc_tran_doanh', topicId: 'chuyen_tro' },
+    });
+    assert.equal(res.ok, true);
+    assert.ok(res.stateSnapshot.relationships.npcs['npc_tran_doanh'].relationship.trust > beforeTrust);
   });
 });

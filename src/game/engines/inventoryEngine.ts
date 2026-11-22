@@ -19,7 +19,12 @@ export function addItemToInventory(
       };
     }
   }
-  const instanceId = `item_inst_${def.itemId}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+  let counter = inventory.items.filter((it) => it.itemId === def.itemId).length + 1;
+  let instanceId = `item_inst_${def.itemId}_${counter}`;
+  while (inventory.items.some((it) => it.instanceId === instanceId)) {
+    counter += 1;
+    instanceId = `item_inst_${def.itemId}_${counter}`;
+  }
   return {
     ...inventory,
     items: [...inventory.items, makeItem({ ...def } as never, instanceId, quantity)],

@@ -14,6 +14,10 @@ export class PatchBuilder {
     return this;
   }
 
+  public getDomain<K extends keyof GameStatePatch>(domain: K): GameStatePatch[K] | undefined {
+    return this.patch[domain as string] as GameStatePatch[K] | undefined;
+  }
+
   public build(): GameStatePatch {
     return this.patch as GameStatePatch;
   }

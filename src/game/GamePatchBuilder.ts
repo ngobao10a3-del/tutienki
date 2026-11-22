@@ -4,74 +4,88 @@ import { PatchBuilder } from './PatchBuilder';
 
 export class GamePatchBuilder {
   private readonly inner = new PatchBuilder();
+  private readonly state: CanonicalGameState;
 
-  public constructor(private readonly state: CanonicalGameState) {}
+  public constructor(state: CanonicalGameState) {
+    this.state = state;
+  }
 
   public worldTime(days: number): this {
-    const time = advanceWorldTime(this.state.world.time, days);
+    const currentWorld = this.inner.getDomain('world') ?? this.state.world;
+    const time = advanceWorldTime(currentWorld.time, days);
     this.inner.setDomain('world', {
-      ...this.state.world,
-      time: { ...this.state.world.time, ...time },
+      ...currentWorld,
+      time: { ...currentWorld.time, ...time },
     });
     return this;
   }
 
   public world(worldPatch: Partial<CanonicalGameState['world']>): this {
-    this.inner.setDomain('world', { ...this.state.world, ...worldPatch });
+    const currentWorld = this.inner.getDomain('world') ?? this.state.world;
+    this.inner.setDomain('world', { ...currentWorld, ...worldPatch });
     return this;
   }
 
   public character(characterPatch: Partial<CanonicalGameState['character']>): this {
-    this.inner.setDomain('character', { ...this.state.character, ...characterPatch });
+    const current = this.inner.getDomain('character') ?? this.state.character;
+    this.inner.setDomain('character', { ...current, ...characterPatch });
     return this;
   }
 
   public cultivation(cultivationPatch: Partial<CanonicalGameState['cultivation']>): this {
-    this.inner.setDomain('cultivation', { ...this.state.cultivation, ...cultivationPatch });
+    const current = this.inner.getDomain('cultivation') ?? this.state.cultivation;
+    this.inner.setDomain('cultivation', { ...current, ...cultivationPatch });
     return this;
   }
 
   public attributes(attributesPatch: Partial<CanonicalGameState['attributes']>): this {
-    this.inner.setDomain('attributes', { ...this.state.attributes, ...attributesPatch });
+    const current = this.inner.getDomain('attributes') ?? this.state.attributes;
+    this.inner.setDomain('attributes', { ...current, ...attributesPatch });
     return this;
   }
 
   public inventory(inventoryPatch: Partial<CanonicalGameState['inventory']>): this {
-    this.inner.setDomain('inventory', { ...this.state.inventory, ...inventoryPatch });
+    const current = this.inner.getDomain('inventory') ?? this.state.inventory;
+    this.inner.setDomain('inventory', { ...current, ...inventoryPatch });
     return this;
   }
 
   public combat(combatPatch: Partial<CanonicalGameState['combat']>): this {
-    this.inner.setDomain('combat', { ...this.state.combat, ...combatPatch });
+    const current = this.inner.getDomain('combat') ?? this.state.combat;
+    this.inner.setDomain('combat', { ...current, ...combatPatch });
     return this;
   }
 
   public narrative(narrativePatch: Partial<CanonicalGameState['narrative']>): this {
-    this.inner.setDomain('narrative', { ...this.state.narrative, ...narrativePatch });
+    const current = this.inner.getDomain('narrative') ?? this.state.narrative;
+    this.inner.setDomain('narrative', { ...current, ...narrativePatch });
     return this;
   }
 
   public relationships(relationshipsPatch: Partial<CanonicalGameState['relationships']>): this {
-    this.inner.setDomain('relationships', { ...this.state.relationships, ...relationshipsPatch });
+    const current = this.inner.getDomain('relationships') ?? this.state.relationships;
+    this.inner.setDomain('relationships', { ...current, ...relationshipsPatch });
     return this;
   }
 
   public causal(causalPatch: Partial<CanonicalGameState['causal']>): this {
-    this.inner.setDomain('causal', { ...this.state.causal, ...causalPatch });
+    const current = this.inner.getDomain('causal') ?? this.state.causal;
+    this.inner.setDomain('causal', { ...current, ...causalPatch });
     return this;
   }
 
   public logEvent(summary: string, choiceText?: string): this {
+    const current = this.inner.getDomain('narrative') ?? this.state.narrative;
     const entry = {
-      id: `log_${this.state.world.time.totalDays}_${this.state.narrative.recentLog.length + 1}`,
+      id: `log_${this.state.world.time.totalDays}_${current.recentLog.length + 1}`,
       day: this.state.world.time.totalDays,
-      sceneId: this.state.narrative.currentSceneId,
+      sceneId: current.currentSceneId,
       summary,
       choiceText,
     };
     this.inner.setDomain('narrative', {
-      ...this.state.narrative,
-      recentLog: [...this.state.narrative.recentLog, entry].slice(-20),
+      ...current,
+      recentLog: [...current.recentLog, entry].slice(-20),
     });
     return this;
   }
@@ -87,8 +101,9 @@ export class GamePatchBuilder {
     relatedFactionIds: readonly string[] = [],
     createdFlags: Readonly<Record<string, boolean | number | string>> = {},
   ): this {
+    const current = this.inner.getDomain('causal') ?? this.state.causal;
     const record: CausalRecord = {
-      id: `causal_${this.state.causal.records.length + 1}_${actionId}`,
+      id: `causal_${current.records.length + 1}_${actionId}`,
       actionId,
       category,
       weight,
@@ -103,22 +118,24 @@ export class GamePatchBuilder {
     };
     const karmaDelta = weight === 'D1' ? 1 : weight === 'D2' ? 3 : weight === 'D3' ? 8 : 20;
     this.inner.setDomain('causal', {
-      records: [...this.state.causal.records, record],
-      karmaScore: this.state.causal.karmaScore + karmaDelta,
-      causalFlags: { ...this.state.causal.causalFlags, ...createdFlags },
+      records: [...current.records, record],
+      karmaScore: current.karmaScore + karmaDelta,
+      causalFlags: { ...current.causalFlags, ...createdFlags },
     });
     return this;
   }
 
   public quests(questsPatch: Partial<CanonicalGameState['quests']>): this {
-    this.inner.setDomain('quests', { ...this.state.quests, ...questsPatch });
+    const current = this.inner.getDomain('quests') ?? this.state.quests;
+    this.inner.setDomain('quests', { ...current, ...questsPatch });
     return this;
   }
 
   public quest(quest: QuestRecord): this {
+    const current = this.inner.getDomain('quests') ?? this.state.quests;
     this.inner.setDomain('quests', {
-      ...this.state.quests,
-      quests: { ...this.state.quests.quests, [quest.id]: quest },
+      ...current,
+      quests: { ...current.quests, [quest.id]: quest },
     });
     return this;
   }

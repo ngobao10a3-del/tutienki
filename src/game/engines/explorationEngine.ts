@@ -5,7 +5,7 @@ import { EVENTS, getEvent } from '../content/story';
 import { QUEST_DEFINITIONS } from '../content/quests';
 import { startCombat } from './combatEngine';
 import { ENEMY_TEMPLATES } from '../content/enemies';
-import { addItemToInventory } from './inventoryEngine';
+import { addItemToInventory, removeItemByInstance } from './inventoryEngine';
 import { getItemDefinition } from '../effects';
 
 export function buildExplorationHandlers(): readonly ActionHandler<any>[] {
@@ -206,7 +206,62 @@ const interactHandler: ActionHandler<any> = {
     }
 
     if (targetType === 'market') {
-      return { ok: true, patch: builder.build(), summary: 'Cửa hàng sẽ sớm được mở trong bản cập nhật.' };
+      const loc = LOCATIONS.find((l) => l.locationId === state.world.currentLocationId);
+      if (!loc || !loc.marketAvailable) {
+        return { ok: false, error: { category: 'BUSINESS_ERROR', code: 'MARKET_UNAVAILABLE', message: 'Nơi này không có chợ phiên hay phường thị.' } };
+      }
+
+      const isBuy = interactionType === 'buy' || interactionType.startsWith('buy');
+      const isSell = interactionType === 'sell' || interactionType.startsWith('sell');
+
+      if (isBuy) {
+        const itemId = targetId || (interactionType.includes(':') ? interactionType.split(':')[1] : '');
+        const def = getItemDefinition(itemId);
+        if (!def || !def.price || def.price <= 0) {
+          return { ok: false, error: { category: 'BUSINESS_ERROR', code: 'ITEM_NOT_FOR_SALE', message: 'Vật phẩm này không bày bán tại phường thị.' } };
+        }
+        const qty = 1;
+        const totalCost = def.price * qty;
+        if (state.inventory.spiritStones < totalCost) {
+          return { ok: false, error: { category: 'BUSINESS_ERROR', code: 'INSUFFICIENT_FUNDS', message: `Cần ${totalCost} linh thạch nhưng bạn chỉ có ${state.inventory.spiritStones}.` } };
+        }
+        const nextInventory = addItemToInventory(
+          { ...state.inventory, spiritStones: state.inventory.spiritStones - totalCost },
+          def,
+          qty,
+        );
+        const patch = builder
+          .inventory(nextInventory)
+          .logEvent(`[Chợ phiên] Đã mua ${def.name} x${qty} với giá ${totalCost} linh thạch.`)
+          .recordCausal(action.actionId, 'character', 'D1', `Mua ${def.name}`, 'Giao dịch chợ phiên', [`Tiêu ${totalCost} linh thạch`])
+          .build();
+        return { ok: true, patch, summary: `Đã mua ${def.name} (-${totalCost} linh thạch).` };
+      }
+
+      if (isSell) {
+        const item = state.inventory.items.find((it) => it.instanceId === targetId || it.itemId === targetId);
+        if (!item) {
+          return { ok: false, error: { category: 'BUSINESS_ERROR', code: 'ITEM_NOT_FOUND', message: 'Không tìm thấy vật phẩm cần bán trong túi đồ.' } };
+        }
+        if (item.questLocked) {
+          return { ok: false, error: { category: 'BUSINESS_ERROR', code: 'ITEM_QUEST_LOCKED', message: 'Vật phẩm nhiệm vụ không thể đem bán.' } };
+        }
+        const def = getItemDefinition(item.itemId);
+        const sellPrice = Math.max(1, Math.floor((def?.price ?? 2) * 0.5));
+        const nextInventory = removeItemByInstance(
+          { ...state.inventory, spiritStones: state.inventory.spiritStones + sellPrice },
+          item.instanceId,
+          1,
+        );
+        const patch = builder
+          .inventory(nextInventory)
+          .logEvent(`[Chợ phiên] Đã bán 1 ${item.name} thu về ${sellPrice} linh thạch.`)
+          .recordCausal(action.actionId, 'character', 'D1', `Bán ${item.name}`, 'Giao dịch chợ phiên', [`Thu ${sellPrice} linh thạch`])
+          .build();
+        return { ok: true, patch, summary: `Đã bán 1 ${item.name} (+${sellPrice} linh thạch).` };
+      }
+
+      return { ok: true, patch: builder.build(), summary: `Phường thị tại ${loc.name} tấp nập tiếng rao mua bán đan dược và linh thảo.` };
     }
 
     return { ok: false, error: { category: 'BUSINESS_ERROR', code: 'INTERACT_UNAVAILABLE', message: `Không thể tương tác với ${targetId} theo cách này.` } };
