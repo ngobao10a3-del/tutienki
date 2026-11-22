@@ -220,6 +220,7 @@ export interface NarrativeState {
   readonly currentChapterId: string;
   readonly currentSceneId: string;
   readonly activeEventId: string | null;
+  readonly pendingEventIds: readonly string[];
   readonly completedUniqueEventIds: readonly string[];
   readonly eventCooldowns: Readonly<Record<string, number>>;
   readonly branchFlags: Readonly<Record<string, boolean | string | number>>;

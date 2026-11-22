@@ -142,6 +142,7 @@ export function createInitialCanonicalState(
       currentChapterId: 'chapter_01_phan_tran',
       currentSceneId: 'scene_01_khoi_hanh',
       activeEventId: null,
+      pendingEventIds: ['ev_ch1_opening'],
       completedUniqueEventIds: [],
       eventCooldowns: {},
       branchFlags: {},
