@@ -88,7 +88,7 @@ export const NPC_TEMPLATES: readonly Omit<NpcRecord, 'relationship'>[] = [
     factionId: 'faction_thanh_van_tong',
     locationId: 'loc_thanh_nguu_tran',
     alive: true,
-    status: 'Đệ tử ngoại môn Thanh Vân Tông đang выполá nhiệm vụ ở hạ giới.',
+    status: 'Đệ tử ngoại môn Thanh Vân Tông đang làm nhiệm vụ ở hạ giới.',
     memories: [],
   },
   {

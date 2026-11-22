@@ -90,7 +90,7 @@ export const ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     price: 55,
   },
   {
-    itemId: 'linh_thao_huyet.sam',
+    itemId: 'linh_thao_huyet_sam',
     name: 'Huyết Sam Linh Thảo',
     category: 'linh_thao',
     grade: 'ha',

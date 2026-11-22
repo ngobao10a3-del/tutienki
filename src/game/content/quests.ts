@@ -21,7 +21,7 @@ export const QUEST_DEFINITIONS: readonly QuestDefinition[] = [
     questId: 'quest_ch1_thanh_nguu_khoi_hanh',
     title: 'Khởi Hành Thanh Ngưu',
     type: 'main',
-    description: 'Làm quen trấn Thanh Ngưu, tìm hiểu về phiên我们认为 linh cốc sắp diễn ra.',
+    description: 'Làm quen trấn Thanh Ngưu, tìm hiểu về phiên chợ linh cốc sắp diễn ra.',
     relatedLocationId: 'loc_thanh_nguu_tran',
     objectives: [
       { id: 'obj_talk_tran_doanh', description: 'Nói chuyện với thợ rèn Trần Doanh', current: 0, required: 1, completed: false },

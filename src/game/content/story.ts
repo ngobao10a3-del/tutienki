@@ -95,7 +95,7 @@ export const EVENTS: Record<string, StoryEvent> = {
         text: 'Mua tin về phiên chợ linh cốc (5 linh thạch).',
         weight: 'D1',
         domain: 'narrative',
-        consequences: ['Mất 5 linh thạch', 'Biết where tìm linh thảo quý'],
+        consequences: ['Mất 5 linh thạch', 'Biết nơi tìm linh thảo quý'],
         nextEventId: 'ev_hear_rumor',
       },
       {

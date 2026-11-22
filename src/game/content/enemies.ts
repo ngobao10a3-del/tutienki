@@ -33,7 +33,7 @@ export const ENEMY_TEMPLATES: Record<string, EnemyTemplate> = {
     evasion: 0.05,
     skillIds: ['bite'],
     lootTable: [
-      { itemId: 'linh_thao_huyet.sam', chance: 0.5, min: 1, max: 2 },
+      { itemId: 'linh_thao_huyet_sam', chance: 0.5, min: 1, max: 2 },
       { itemId: 'kho_luong', chance: 0.3, min: 1, max: 1 },
     ],
     spiritStoneReward: [4, 10],
@@ -82,7 +82,7 @@ export const ENEMY_TEMPLATES: Record<string, EnemyTemplate> = {
   black_knight: {
     enemyId: 'black_knight',
     name: 'Hắc Diện Kiếm Khách',
-    description: 'Võ công sharply, mỗi nhát kiếm đều tìm điểm yếu.',
+    description: 'Võ công sắc bén, mỗi nhát kiếm đều tìm điểm yếu.',
     hp: 110,
     spiritEnergy: 50,
     attack: 18,
